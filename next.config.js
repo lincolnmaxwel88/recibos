@@ -7,7 +7,6 @@ const nextConfig = {
   // Configurações para produção
   reactStrictMode: true,
   output: 'standalone', // Otimiza para deploy em ambientes como Railway
-  swcMinify: true,      // Minificação mais eficiente
   
   // Desativar a verificação de ESLint durante o build
   eslint: {
@@ -19,6 +18,16 @@ const nextConfig = {
   typescript: {
     // Ignorar erros de TypeScript durante o build para permitir o deploy
     ignoreBuildErrors: true,
+  },
+  
+  // Configuração para lidar com módulos nativos como better-sqlite3
+  webpack: (config, { isServer }) => {
+    // Se estivermos no servidor e não em desenvolvimento
+    if (isServer) {
+      // Ignorar módulos específicos no servidor
+      config.externals = [...config.externals, 'better-sqlite3'];
+    }
+    return config;
   },
 };
 
