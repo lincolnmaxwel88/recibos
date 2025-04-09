@@ -5,7 +5,7 @@ import { Recibo } from '@/types/recibo';
 import { v4 as uuidv4 } from 'uuid';
 
 // Função auxiliar para converter os tipos dos campos
-function converterParaRecibo(item: any): Recibo {
+function converterParaRecibo(item: Record<string, unknown>): Recibo {
   // Verificar se o item existe
   if (!item) return item;
   

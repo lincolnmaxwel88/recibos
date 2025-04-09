@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { proprietarios } from '@/db/schema';
-import { eq, and, or } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { Proprietario } from '@/types/proprietario';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -86,7 +86,7 @@ export class ProprietarioRepository {
     const proprietario = await this.findById(id, usuarioId, isAdmin);
     if (!proprietario) return false;
     
-    const result = await db.delete(proprietarios).where(eq(proprietarios.id, id));
+    await db.delete(proprietarios).where(eq(proprietarios.id, id));
     return true;
   }
 }
