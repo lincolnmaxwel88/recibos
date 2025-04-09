@@ -4,8 +4,10 @@ const nextConfig = {
     // Definir o fuso horário para Brasília (GMT-3)
     TZ: 'America/Sao_Paulo',
   },
-  // Outras configurações do Next.js
+  // Configurações para produção
   reactStrictMode: true,
+  output: 'standalone', // Otimiza para deploy em ambientes como Railway
+  swcMinify: true,      // Minificação mais eficiente
 };
 
 module.exports = nextConfig;

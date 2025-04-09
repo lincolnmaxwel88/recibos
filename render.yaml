@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: sistema-gestao
+    env: node
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SEED_DATABASE
+        value: true
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
