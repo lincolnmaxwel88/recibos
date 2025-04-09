@@ -19,7 +19,8 @@ export default function SetupPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/setup/register', {
+      // Usar a nova rota de API para criar um administrador personalizado
+      const response = await fetch('/api/setup/admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
