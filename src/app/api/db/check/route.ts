@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkDatabaseConnection } from '@/db/postgres';
+import { checkDatabaseConnection } from '@/db/vercel-postgres';
 
 // Configurar para usar o runtime de borda da Vercel
 export const runtime = 'edge';

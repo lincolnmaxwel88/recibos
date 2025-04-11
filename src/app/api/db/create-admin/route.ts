@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import postgres from 'postgres';
+import { sql } from '@vercel/postgres';
+
+// Configurar para usar o runtime de borda da Vercel
+export const runtime = 'edge';
 
 // Função para criar usuário admin
 export async function POST(request: NextRequest) {
@@ -17,26 +20,13 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Verificar se a variável de ambiente POSTGRES_URL está definida
-    const postgresUrl = process.env.POSTGRES_URL;
-    
-    if (!postgresUrl) {
-      return NextResponse.json(
-        { error: 'Variável de ambiente POSTGRES_URL não está definida' },
-        { status: 500 }
-      );
-    }
-    
-    // Criar cliente postgres
-    const client = postgres(postgresUrl, { prepare: false });
-    
     try {
       // Verificar se o email já está em uso
-      const usuarioExistente = await client`
+      const usuarioExistente = await sql`
         SELECT * FROM usuarios WHERE email = ${email}
       `;
       
-      if (usuarioExistente.length > 0) {
+      if (usuarioExistente.rows.length > 0) {
         return NextResponse.json(
           { error: 'Este email já está em uso' },
           { status: 400 }
@@ -53,7 +43,7 @@ export async function POST(request: NextRequest) {
       const dataAtual = new Date().toISOString();
       
       // Inserir o usuário administrador
-      await client`
+      await sql`
         INSERT INTO usuarios (
           id, nome, email, senha, planoId, ativo, admin, 
           trocarSenhaNoProximoLogin, createdAt, updatedAt
@@ -82,9 +72,6 @@ export async function POST(request: NextRequest) {
         { error: `Erro ao criar usuário: ${String(error)}` },
         { status: 500 }
       );
-    } finally {
-      // Fechar a conexão com o banco de dados
-      await client.end();
     }
   } catch (error) {
     console.error('Erro ao criar administrador:', error);
