@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { hash } from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import { db } from '@/db';
-import { usuarios, planos } from '@/db/schema';
+import { sql } from '@vercel/postgres';
+// Nota: Não estamos mais usando o schema diretamente, pois estamos usando SQL bruto
 
 export default function SetupStandalonePage() {
   const router = useRouter();
@@ -23,82 +23,55 @@ export default function SetupStandalonePage() {
     setError('');
 
     try {
-      // Criar plano básico
-      const planoBasico = {
-        id: 'basico',
-        nome: 'Básico',
-        descricao: 'Plano básico com recursos limitados',
-        limiteImoveis: 5,
-        limiteInquilinos: 5,
-        limiteProprietarios: 5,
-        permiteRelatoriosAvancados: false,
-        permiteModelosPersonalizados: false,
-        permiteMultiplosUsuarios: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      // Criar plano empresarial
-      const planoEmpresarial = {
-        id: 'empresarial',
-        nome: 'Empresarial',
-        descricao: 'Plano empresarial com recursos ilimitados',
-        limiteImoveis: 100,
-        limiteInquilinos: 100,
-        limiteProprietarios: 100,
-        permiteRelatoriosAvancados: true,
-        permiteModelosPersonalizados: true,
-        permiteMultiplosUsuarios: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      // Tentar inserir planos (ignorar erro se já existirem)
-      try {
-        await db.insert(planos).values(planoBasico);
-        await db.insert(planos).values(planoEmpresarial);
-      } catch (planoError) {
-        console.log('Planos já existem ou erro ao inserir:', planoError);
-        // Continuar mesmo se houver erro
-      }
+      const timestamp = new Date().toISOString();
+      const userId = uuidv4();
       
       // Criar senha com hash
       const senhaHash = await hash(senha, 10);
       
-      // Criar usuário administrador
-      const usuarioAdmin = {
-        id: uuidv4(),
-        nome: nome,
-        email: email,
-        senha: senhaHash,
-        planoId: 'empresarial',
-        ativo: true,
-        admin: true,
-        trocarSenhaNoProximoLogin: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      // Tentar inserir usuário administrador
+      // Verificar se as tabelas existem
       try {
-        await db.insert(usuarios).values(usuarioAdmin);
+        // Inserir planos padrão (se não existirem)
+        await sql`
+          INSERT INTO "planos" ("id", "nome", "descricao", "limiteImoveis", "limiteInquilinos", "limiteProprietarios", "permiteRelatoriosAvancados", "permiteModelosPersonalizados", "permiteMultiplosUsuarios", "createdAt", "updatedAt")
+          VALUES 
+          ('basico', 'Básico', 'Plano básico com recursos limitados', 5, 5, 5, false, false, false, ${timestamp}, ${timestamp}),
+          ('empresarial', 'Empresarial', 'Plano empresarial com recursos ilimitados', 100, 100, 100, true, true, true, ${timestamp}, ${timestamp})
+          ON CONFLICT (id) DO NOTHING
+        `;
+        
+        // Verificar se o email já existe
+        const existingUser = await sql`SELECT email FROM "usuarios" WHERE email = ${email}`;
+        
+        if (existingUser && existingUser.rowCount && existingUser.rowCount > 0) {
+          setError('Este email já está em uso');
+          setLoading(false);
+          return;
+        }
+        
+        // Inserir usuário administrador
+        await sql`
+          INSERT INTO "usuarios" ("id", "nome", "email", "senha", "planoId", "ativo", "admin", "trocarSenhaNoProximoLogin", "createdAt", "updatedAt")
+          VALUES (${userId}, ${nome}, ${email}, ${senhaHash}, 'empresarial', true, true, false, ${timestamp}, ${timestamp})
+        `;
         
         setMessage('Administrador criado com sucesso! Redirecionando para o login...');
         setTimeout(() => {
           router.push('/login');
         }, 3000);
-      } catch (userError) {
-        console.error('Erro ao criar usuário:', userError);
+      } catch (dbError: any) {
+        console.error('Erro ao configurar banco de dados:', dbError);
         
-        // Verificar se é um erro de usuário duplicado
-        const errorMsg = String(userError);
-        if (errorMsg.includes('UNIQUE constraint failed') && errorMsg.includes('email')) {
+        // Verificar se é um erro de violação de unicidade
+        if (dbError.message && dbError.message.includes('unique') && dbError.message.includes('email')) {
           setError('Este email já está em uso');
+        } else if (dbError.message && dbError.message.includes('relation') && dbError.message.includes('does not exist')) {
+          setError('Erro: As tabelas do banco de dados não foram criadas. Execute a migração primeiro.');
         } else {
-          throw userError; // Lançar o erro para ser capturado pelo catch externo
+          setError(`Erro ao configurar o banco de dados: ${dbError.message || 'Erro desconhecido'}`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar administrador:', error);
       setError('Erro ao criar administrador: ' + String(error));
     } finally {

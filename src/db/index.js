@@ -1,17 +1,32 @@
-const { drizzle } = require('drizzle-orm/better-sqlite3');
-const Database = require('better-sqlite3');
+// Importar o cliente SQL do Vercel Postgres
+const { sql } = require('@vercel/postgres');
+const { drizzle } = require('drizzle-orm/vercel-postgres');
 const { proprietarios, imoveis, inquilinos, recibos } = require('./schema.js');
 
-// Inicializa o banco de dados SQLite
-const sqlite = new Database('./sqlite.db');
-const db = drizzle(sqlite, { schema: { proprietarios, imoveis, inquilinos, recibos } });
+// Criar instância do drizzle com o cliente do Vercel Postgres
+const db = drizzle(sql, { schema: { proprietarios, imoveis, inquilinos, recibos } });
 
 // Exporta o objeto de banco de dados
 module.exports = { db };
 
-// Função para fechar a conexão com o banco de dados
+// Função para verificar a conexão com o banco de dados
+async function checkDatabaseConnection() {
+  try {
+    // Tenta executar uma consulta simples
+    const result = await sql`SELECT 1 as check`;
+    console.log('Conexão com o banco de dados PostgreSQL estabelecida com sucesso!');
+    return true;
+  } catch (error) {
+    console.error('Erro ao conectar ao banco de dados PostgreSQL:', error);
+    return false;
+  }
+}
+
+// Função para fechar a conexão com o banco de dados (mantida para compatibilidade)
 function closeDatabase() {
-  sqlite.close();
+  // Não é necessário fechar explicitamente a conexão com o Vercel Postgres
+  console.log('Conexão com o banco de dados fechada');
 }
 
 module.exports.closeDatabase = closeDatabase;
+module.exports.checkDatabaseConnection = checkDatabaseConnection;

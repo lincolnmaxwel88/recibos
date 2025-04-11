@@ -26,13 +26,24 @@ const nextConfig = {
   // Configurar transpilação de módulos
   transpilePackages: ['@vercel/postgres'],
   
-  // Configurar webpack para resolver módulos
-  webpack: (config) => {
+  // Desativar a otimização do CSS para evitar problemas com o lightningcss
+  experimental: {
+    optimizeCss: false,
+  },
+  
+  // Configurar webpack para resolver módulos e ignorar módulos problemáticos
+  webpack: (config, { isServer }) => {
     // Resolver módulos com alias
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': config.resolve.alias['@'] || __dirname,
     };
+    
+    // Ignorar módulos nativos problemáticos
+    if (isServer) {
+      config.externals = [...config.externals, 'better-sqlite3', 'lightningcss'];
+    }
+    
     return config;
   },
 };
