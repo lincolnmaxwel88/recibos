@@ -11,7 +11,8 @@
     "db:migrate": "node src/db/migrate.js",
     "db:seed": "node src/db/seed.js",
     "db:setup": "node src/db/setup.js",
-    "postbuild": "npm run db:setup"
+    "db:migrate-pg": "node -r @swc/register src/db/migrate-postgres.ts",
+    "postbuild": "echo 'Skipping automatic database setup for Vercel deployment'"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -20,6 +21,7 @@
     "idb": "^8.0.2",
     "jose": "^6.0.10",
     "next": "15.2.4",
+    "postgres": "^3.4.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "uuid": "^11.1.0"
