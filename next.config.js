@@ -21,10 +21,7 @@ const nextConfig = {
   },
   
   // Configuração para o ambiente Edge da Vercel
-  experimental: {
-    // Habilitar o runtime de borda para melhor desempenho
-    serverComponentsExternalPackages: [],
-  },
+  serverExternalPackages: [],
 };
 
 module.exports = nextConfig;
