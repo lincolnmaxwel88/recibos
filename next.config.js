@@ -22,6 +22,19 @@ const nextConfig = {
   
   // Configuração para o ambiente Edge da Vercel
   serverExternalPackages: [],
+  
+  // Configurar transpilação de módulos
+  transpilePackages: ['@vercel/postgres'],
+  
+  // Configurar webpack para resolver módulos
+  webpack: (config) => {
+    // Resolver módulos com alias
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': config.resolve.alias['@'] || __dirname,
+    };
+    return config;
+  },
 };
 
 module.exports = nextConfig;
