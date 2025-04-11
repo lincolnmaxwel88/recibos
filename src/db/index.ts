@@ -1,17 +1,26 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
+// Importar o cliente SQL do Vercel Postgres
+import { sql } from '@vercel/postgres';
+import { drizzle } from 'drizzle-orm/vercel-postgres';
 import * as schema from './schema';
 
-// Determinar o caminho do banco de dados com base no ambiente
-const dbPath = process.env.NODE_ENV === 'production' 
-  ? '/data/sqlite.db'  // No Railway, usar o diretório /data que é persistente
-  : './sqlite.db';     // Em desenvolvimento local, usar o diretório raiz
+// Criar instância do drizzle com o cliente do Vercel Postgres
+export const db = drizzle(sql, { schema });
 
-// Inicializa o banco de dados SQLite
-const sqlite = new Database(dbPath);
-export const db = drizzle(sqlite, { schema });
+// Função para verificar a conexão com o banco de dados
+export async function checkDatabaseConnection() {
+  try {
+    // Tenta executar uma consulta simples
+    const result = await sql`SELECT 1 as check`;
+    console.log('Conexão com o banco de dados PostgreSQL estabelecida com sucesso!');
+    return true;
+  } catch (error) {
+    console.error('Erro ao conectar ao banco de dados PostgreSQL:', error);
+    return false;
+  }
+}
 
-// Função para fechar a conexão com o banco de dados
+// Função para fechar a conexão com o banco de dados (mantida para compatibilidade)
 export function closeDatabase() {
-  sqlite.close();
+  // Não é necessário fechar explicitamente a conexão com o Vercel Postgres
+  console.log('Conexão com o banco de dados fechada');
 }

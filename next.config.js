@@ -20,14 +20,10 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   
-  // Configuração para lidar com módulos nativos como better-sqlite3
-  webpack: (config, { isServer }) => {
-    // Se estivermos no servidor e não em desenvolvimento
-    if (isServer) {
-      // Ignorar módulos específicos no servidor
-      config.externals = [...config.externals, 'better-sqlite3'];
-    }
-    return config;
+  // Configuração para o ambiente Edge da Vercel
+  experimental: {
+    // Habilitar o runtime de borda para melhor desempenho
+    serverComponentsExternalPackages: [],
   },
 };
 
